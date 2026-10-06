@@ -2,9 +2,11 @@ import os
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 from ament_index_python.packages import PackageNotFoundError, get_package_share_directory
 
@@ -47,13 +49,27 @@ def optional_parts(context):
                 'max_linear_speed': float(LaunchConfiguration('marker_speed').perform(context)),
             }],
         ))
+
+    if enabled(context, 'joy_teleop'):
+        try:
+            get_package_share_directory('lekiwi_teleop')
+        except PackageNotFoundError as e:
+            raise RuntimeError(
+                'joy_teleop:=true needs lekiwi_teleop; build it, or pass joy_teleop:=false') from e
+        actions.append(Node(
+            package='lekiwi_teleop',
+            executable='joy_teleop',
+            name='joy_teleop',
+            output='screen',
+        ))
     return actions
 
 
 def generate_launch_description():
     # Everything that runs on the robot: the ros2_control stack, move_group (planning, IK,
-    # collision checking, execution) and the RViz marker follower. Only RViz runs elsewhere:
-    #   ros2 launch lekiwi_moveit_config moveit_rviz.launch.py
+    # collision checking, execution), the RViz marker follower and the joystick teleop. RViz and,
+    # by default, the joystick driver run on the workstation:
+    #   ros2 launch lekiwi_bringup workstation.launch.py
     pkg_lekiwi_bringup = get_package_share_directory('lekiwi_bringup')
 
     declare_port = DeclareLaunchArgument(
@@ -100,6 +116,37 @@ def generate_launch_description():
         description='Maximum gripper speed when following the marker [m/s]'
     )
 
+    declare_joy_teleop = DeclareLaunchArgument(
+        'joy_teleop',
+        default_value='true',
+        description='Start joy_teleop (lekiwi_teleop): /joy to the base and the arm. The joystick '
+                    'driver (joy_node) can run here (joy:=true) or on the workstation '
+                    '(workstation.launch.py)'
+    )
+
+    declare_joy = DeclareLaunchArgument(
+        'joy',
+        default_value='false',
+        description='Start joy_node here, for a joystick plugged into the robot'
+    )
+
+    declare_joy_device = DeclareLaunchArgument(
+        'joy_device', default_value='0', description='joy_node device_id')
+
+    declare_joy_deadzone = DeclareLaunchArgument(
+        'joy_deadzone', default_value='0.166', description='joy_node deadzone')
+
+    joy_node = Node(
+        package='joy',
+        executable='joy_node',
+        name='joy_node',
+        parameters=[{
+            'device_id': ParameterValue(LaunchConfiguration('joy_device'), value_type=int),
+            'deadzone': ParameterValue(LaunchConfiguration('joy_deadzone'), value_type=float),
+        }],
+        condition=IfCondition(LaunchConfiguration('joy')),
+    )
+
     # Hardware, robot_state_publisher and controllers
     hardware = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -120,6 +167,11 @@ def generate_launch_description():
         declare_arm_marker,
         declare_marker_mode,
         declare_marker_speed,
+        declare_joy_teleop,
+        declare_joy,
+        declare_joy_device,
+        declare_joy_deadzone,
         hardware,
+        joy_node,
         OpaqueFunction(function=optional_parts),
     ])
