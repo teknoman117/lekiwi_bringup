@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="lekiwi">
+
+  <!-- LeKiwi mobile manipulator: the LeKiwi base with an SO-101 arm on its arm_mount -->
+  <xacro:arg name="port" default="/dev/ttyACM0"/>
+  <xacro:arg name="baudrate" default="1000000"/>
+  <xacro:arg name="use_mock_hardware" default="false"/>
+
+  <xacro:include filename="$(find lekiwi_description)/urdf/lekiwi_base.xacro" />
+  <xacro:include filename="$(find lekiwi_description)/urdf/lekiwi_base.ros2_control.xacro" />
+  <xacro:include filename="$(find so101_description)/urdf/so101_arm.xacro" />
+  <xacro:include filename="$(find so101_description)/urdf/so101.ros2_control.xacro" />
+
+  <xacro:lekiwi_base/>
+
+  <!-- so101_base_link is the center of the arm's base, which sits on arm_mount -->
+  <xacro:so101_arm parent="arm_mount">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:so101_arm>
+
+  <!-- The arm (IDs 1-6) and the wheels (IDs 7-9) share one servo bus, so all nine joints go in
+       one system: the port can only be opened once. -->
+  <xacro:property name="mock"
+      value="${['false', '0', 'true', '1'].index(str('$(arg use_mock_hardware)').strip().lower()) >= 2}"/>
+
+  <ros2_control name="lekiwi" type="system">
+    <hardware>
+      <xacro:if value="${mock}">
+        <plugin>mock_components/GenericSystem</plugin>
+      </xacro:if>
+      <xacro:unless value="${mock}">
+        <plugin>waveshare_servos/WaveshareServos</plugin>
+        <param name="port">$(arg port)</param>
+        <param name="baudrate">$(arg baudrate)</param>
+      </xacro:unless>
+    </hardware>
+
+    <xacro:lekiwi_base_ros2_joints/>
+    <xacro:so101_arm_ros2_joints/>
+  </ros2_control>
+
+</robot>
