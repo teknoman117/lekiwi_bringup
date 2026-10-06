@@ -7,6 +7,7 @@ Combined description and launch files for the LeKiwi mobile manipulator: the LeK
 
 | Launch | Starts | Runs on |
 |---|---|---|
+| `robot.launch.py` | `hardware_control.launch.py`, `move_group` (`lekiwi_moveit_config`), the marker follower (`lekiwi_teleop arm_marker`) | the robot |
 | `hardware_control.launch.py` | `robot_state_publisher`, `ros2_control_node`, all controllers | the robot |
 | `rviz.launch.py` | RViz only | any host |
 | `display.launch.py` | `robot_state_publisher`, `joint_state_publisher_gui`, RViz (no controllers) | any host, no robot needed |
@@ -15,6 +16,26 @@ Combined description and launch files for the LeKiwi mobile manipulator: the LeK
 (default `false`), and `rviz` (default `false`; starts `rviz.launch.py` on the same host).
 
 `rviz.launch.py` arguments: `fixed_frame` (default `base_footprint`), `rviz_config`.
+
+`robot.launch.py` arguments: `port`, `use_mock_hardware`, `limp` (as above), `moveit` (default
+`true`), `arm_marker` (default `true`, needs `moveit`), `marker_mode` (`free`, `claw` or `planar`; also in
+the marker's menu) and `marker_speed` (the follower's maximum gripper speed, default 0.08 m/s). `lekiwi_moveit_config` and `lekiwi_teleop` are looked up only when
+enabled; they are not declared dependencies, since `lekiwi_moveit_config` depends on this package.
+
+## Robot / workstation split
+
+The robot does all the computation; the workstation only runs RViz (same `ROS_DOMAIN_ID`):
+
+```bash
+# robot
+ros2 launch lekiwi_bringup robot.launch.py
+# workstation
+ros2 launch lekiwi_moveit_config moveit_rviz.launch.py
+```
+
+The workstation needs `lekiwi_moveit_config` and its dependencies built (RViz's MotionPlanning
+panel loads the robot model, the SRDF and the IK plugin to drag its planning marker), but not
+`waveshare_servos` or `lekiwi_teleop`.
 
 ## Limp mode
 
