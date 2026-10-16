@@ -14,7 +14,7 @@ def generate_launch_description():
     pkg_lekiwi_bringup = get_package_share_directory('lekiwi_bringup')
 
     # Paths to files
-    urdf_file = os.path.join(pkg_lekiwi_bringup, 'urdf', 'lekiwi.urdf.xacro')
+    urdf_file = LaunchConfiguration('description_file')
 
     # Launch argument for simulation time
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
@@ -55,6 +55,11 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'description_file',
+            default_value=os.path.join(pkg_lekiwi_bringup, 'urdf', 'lekiwi.urdf.xacro'),
+            description='Robot description (xacro)'
+        ),
         DeclareLaunchArgument(
             'use_sim_time',
             default_value='false',

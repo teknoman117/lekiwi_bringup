@@ -12,12 +12,16 @@ Combined description and launch files for the LeKiwi mobile manipulator: the LeK
 | `rviz.launch.py` | RViz only | any host |
 | `display.launch.py` | `robot_state_publisher`, `joint_state_publisher_gui`, RViz (no controllers) | any host, no robot needed |
 
+`hardware_control.launch.py` and `display.launch.py` take `description_file` (the xacro to use).
+
 `hardware_control.launch.py` arguments: `port` (default `/dev/ttyACM0`), `use_mock_hardware`
 (default `false`), and `rviz` (default `false`; starts `rviz.launch.py` on the same host).
 
 `rviz.launch.py` arguments: `fixed_frame` (default `base_footprint`), `rviz_config`.
 
-`robot.launch.py` arguments: `port`, `use_mock_hardware`, `limp` (as above), `moveit` (default
+`robot.launch.py` arguments: `description_file` (the robot model, default `urdf/lekiwi.urdf.xacro`;
+another one adds parts, see `manipulator`), `moveit_config_package` (default `lekiwi_moveit_config`),
+`port`, `use_mock_hardware`, `limp` (as above), `moveit` (default
 `true`), `arm_marker` (default `true`, needs `moveit`), `marker_mode` (`free`, `claw` or `planar`; also in
 the marker's menu) and `marker_speed` (the follower's maximum gripper speed, default 0.08 m/s). `lekiwi_moveit_config` and `lekiwi_teleop` are looked up only when
 enabled; they are not declared dependencies, since `lekiwi_moveit_config` depends on this package.

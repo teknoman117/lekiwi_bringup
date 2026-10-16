@@ -17,7 +17,7 @@ def generate_launch_description():
     pkg_so101_description = get_package_share_directory('so101_description')
 
     # Paths to files. The base and arm controller configs are merged key by key.
-    urdf_file = os.path.join(pkg_lekiwi_bringup, 'urdf', 'lekiwi.urdf.xacro')
+    urdf_file = LaunchConfiguration('description_file')
     controller_configs = [
         os.path.join(pkg_lekiwi_description, 'config', 'omni_controllers.yaml'),
         os.path.join(pkg_so101_description, 'config', 'so101_controllers.yaml'),
@@ -28,6 +28,13 @@ def generate_launch_description():
     port = LaunchConfiguration('port')
     use_mock_hardware = LaunchConfiguration('use_mock_hardware')
     limp = LaunchConfiguration('limp')
+
+    declare_description_file = DeclareLaunchArgument(
+        'description_file',
+        default_value=os.path.join(pkg_lekiwi_bringup, 'urdf', 'lekiwi.urdf.xacro'),
+        description='Robot description (xacro), e.g. one that adds sensors to the stock LeKiwi; '
+                    'it gets the xacro args port, use_mock_hardware'
+    )
 
     declare_use_sim_time = DeclareLaunchArgument(
         'use_sim_time',
@@ -140,6 +147,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        declare_description_file,
         declare_use_sim_time,
         declare_port,
         declare_use_mock_hardware,

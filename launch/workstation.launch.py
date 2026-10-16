@@ -15,12 +15,13 @@ def rviz(context):
     # Looked up at launch: lekiwi_moveit_config depends on this package (see robot.launch.py).
     if LaunchConfiguration('rviz').perform(context).strip().lower() not in ('true', '1'):
         return []
+    package = LaunchConfiguration('moveit_config_package').perform(context)
     try:
-        pkg_lekiwi_moveit_config = get_package_share_directory('lekiwi_moveit_config')
+        pkg_moveit_config = get_package_share_directory(package)
     except PackageNotFoundError as e:
-        raise RuntimeError('rviz:=true needs lekiwi_moveit_config; build it') from e
+        raise RuntimeError(f'rviz:=true needs {package}; build it') from e
     return [IncludeLaunchDescription(PythonLaunchDescriptionSource(
-        os.path.join(pkg_lekiwi_moveit_config, 'launch', 'moveit_rviz.launch.py')))]
+        os.path.join(pkg_moveit_config, 'launch', 'moveit_rviz.launch.py')))]
 
 
 def generate_launch_description():
@@ -29,6 +30,12 @@ def generate_launch_description():
     # (robot.launch.py), on the same ROS_DOMAIN_ID.
     declare_rviz = DeclareLaunchArgument(
         'rviz', default_value='true', description='Start RViz (lekiwi_moveit_config)')
+
+    declare_moveit_config_package = DeclareLaunchArgument(
+        'moveit_config_package',
+        default_value='lekiwi_moveit_config',
+        description='MoveIt config package for RViz (its launch/moveit_rviz.launch.py)'
+    )
 
     declare_joy = DeclareLaunchArgument(
         'joy',
@@ -56,6 +63,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         declare_rviz,
+        declare_moveit_config_package,
         declare_joy,
         declare_joy_device,
         declare_joy_deadzone,

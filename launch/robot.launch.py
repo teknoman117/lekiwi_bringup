@@ -21,14 +21,15 @@ def optional_parts(context):
     # a dependency back on it, and with moveit:=false the robot does not need MoveIt installed.
     actions = []
     if enabled(context, 'moveit'):
+        package = LaunchConfiguration('moveit_config_package').perform(context)
         try:
-            pkg_lekiwi_moveit_config = get_package_share_directory('lekiwi_moveit_config')
+            pkg_moveit_config = get_package_share_directory(package)
         except PackageNotFoundError as e:
             raise RuntimeError(
-                'moveit:=true needs lekiwi_moveit_config; build it, or pass moveit:=false') from e
+                f'moveit:=true needs {package}; build it, or pass moveit:=false') from e
         actions.append(IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(pkg_lekiwi_moveit_config, 'launch', 'move_group.launch.py')),
+                os.path.join(pkg_moveit_config, 'launch', 'move_group.launch.py')),
         ))
 
     if enabled(context, 'arm_marker'):
@@ -89,6 +90,19 @@ def generate_launch_description():
         default_value='false',
         description='Leave the hardware inactive (torque never switched on) and start only '
                     'joint_state_broadcaster; nothing can move the arm'
+    )
+
+    declare_description_file = DeclareLaunchArgument(
+        'description_file',
+        default_value=os.path.join(pkg_lekiwi_bringup, 'urdf', 'lekiwi.urdf.xacro'),
+        description='Robot description (xacro), e.g. one that adds sensors to the stock LeKiwi'
+    )
+
+    declare_moveit_config_package = DeclareLaunchArgument(
+        'moveit_config_package',
+        default_value='lekiwi_moveit_config',
+        description='MoveIt config package for move_group (its launch/move_group.launch.py); '
+                    'its robot model must match description_file'
     )
 
     declare_moveit = DeclareLaunchArgument(
@@ -155,6 +169,7 @@ def generate_launch_description():
             'port': LaunchConfiguration('port'),
             'use_mock_hardware': LaunchConfiguration('use_mock_hardware'),
             'limp': LaunchConfiguration('limp'),
+            'description_file': LaunchConfiguration('description_file'),
             'rviz': 'false',
         }.items(),
     )
@@ -163,6 +178,8 @@ def generate_launch_description():
         declare_port,
         declare_use_mock_hardware,
         declare_limp,
+        declare_description_file,
+        declare_moveit_config_package,
         declare_moveit,
         declare_arm_marker,
         declare_marker_mode,
