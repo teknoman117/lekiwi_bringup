@@ -62,6 +62,9 @@ def optional_parts(context):
             executable='joy_teleop',
             name='joy_teleop',
             output='screen',
+            parameters=[{
+                'cmd_vel_topic': LaunchConfiguration('base_cmd_vel_topic').perform(context),
+            }],
         ))
     return actions
 
@@ -138,6 +141,13 @@ def generate_launch_description():
                     '(workstation.launch.py)'
     )
 
+    declare_base_cmd_vel_topic = DeclareLaunchArgument(
+        'base_cmd_vel_topic',
+        default_value='/omni_wheel_drive_controller/cmd_vel',
+        description='Where joy_teleop sends base commands (TwistStamped); a twist_mux input when '
+                    'something else also drives the base'
+    )
+
     declare_joy = DeclareLaunchArgument(
         'joy',
         default_value='false',
@@ -185,6 +195,7 @@ def generate_launch_description():
         declare_marker_mode,
         declare_marker_speed,
         declare_joy_teleop,
+        declare_base_cmd_vel_topic,
         declare_joy,
         declare_joy_device,
         declare_joy_deadzone,
