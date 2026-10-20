@@ -101,6 +101,13 @@ def generate_launch_description():
         description='Robot description (xacro), e.g. one that adds sensors to the stock LeKiwi'
     )
 
+    declare_extra_controller_config = DeclareLaunchArgument(
+        'extra_controller_config',
+        default_value='',
+        description='A controller parameters file loaded after the stock ones (its values win); '
+                    'see hardware_control.launch.py'
+    )
+
     declare_moveit_config_package = DeclareLaunchArgument(
         'moveit_config_package',
         default_value='lekiwi_moveit_config',
@@ -180,6 +187,7 @@ def generate_launch_description():
             'use_mock_hardware': LaunchConfiguration('use_mock_hardware'),
             'limp': LaunchConfiguration('limp'),
             'description_file': LaunchConfiguration('description_file'),
+            'extra_controller_config': LaunchConfiguration('extra_controller_config'),
             'rviz': 'false',
         }.items(),
     )
@@ -189,6 +197,7 @@ def generate_launch_description():
         declare_use_mock_hardware,
         declare_limp,
         declare_description_file,
+        declare_extra_controller_config,
         declare_moveit_config_package,
         declare_moveit,
         declare_arm_marker,

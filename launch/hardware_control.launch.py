@@ -60,6 +60,13 @@ def generate_launch_description():
         description='Also start RViz on this host'
     )
 
+    declare_extra_controller_config = DeclareLaunchArgument(
+        'extra_controller_config',
+        default_value='',
+        description='A controller parameters file loaded after the stock ones (its values win), '
+                    'e.g. a robot that turns off the omni controller\'s odom TF'
+    )
+
     declare_limp = DeclareLaunchArgument(
         'limp',
         default_value='false',
@@ -99,6 +106,11 @@ def generate_launch_description():
             {'robot_description': robot_description_content},
             *controller_configs,
         ]
+        # A robot's own controller settings over the stock ones (later files win), e.g.
+        # enable_odom_tf: false when an EKF publishes odom -> base_footprint instead
+        extra = LaunchConfiguration('extra_controller_config').perform(context)
+        if extra:
+            parameters.append(extra)
         if limp.perform(context).strip().lower() in ('true', '1'):
             parameters.append({'hardware_components_initial_state.inactive': ['lekiwi']})
         return [Node(
@@ -152,6 +164,7 @@ def generate_launch_description():
         declare_port,
         declare_use_mock_hardware,
         declare_limp,
+        declare_extra_controller_config,
         declare_rviz,
         robot_state_publisher_node,
         controller_manager_node,
